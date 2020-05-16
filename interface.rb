@@ -5,7 +5,7 @@ class Interface
     name = gets.chomp
     @user = User.new(name)
     @dealer = Dealer.new
-    puts "\n----------"
+    cls
     puts "Привет, #{@user.name}!"
     new_game
   end
@@ -30,10 +30,10 @@ class Interface
   end
 
   def rate
-    rate = Rate.new
+    @rate = Rate.new
     @user.account -= 10
     @dealer.account -= 10
-    puts "Ставка #{rate.bid}$"
+    puts "Ставка #{@rate.bid}$"
     current_situation_user
     user_move
   end
@@ -71,12 +71,33 @@ class Interface
     puts "У дилера на руках #{@dealer.cards.count} карты:"
     @dealer.cards.each { |card| puts "#{card.value + card.suit}"}
     puts "У дилера #{@dealer.current_score} очков "
+    result
+  end
 
-    if @dealer.current_score > @user.current_score
+  def result
+    if @user.current_score == @dealer.current_score
+      puts 'Ничья'
+      @dealer.credit_draw
+      @user.credit_draw
+    elsif @user.current_score > 21 && @dealer.current_score > 21
+      puts 'И у дилера перебор и у вас перебор. Ничья'
+      @dealer.credit_draw(@rate.bid)
+      @user.credit_draw(@rate.bid)
+    elsif @user.current_score > 21
+      puts 'У вас перебор. Вы проиграли'
+      @dealer.credit_winnings(@rate.bid)
+    elsif @dealer.current_score > 21
+      puts 'Вы выиграли у дилера перебор'
+      @user.credit_winnings(@rate.bid)
+    elsif @dealer.current_score > @user.current_score
       puts "Дилер победил"
+      @dealer.credit_winnings(@rate.bid)
     else
       puts "Ура! Вы победили!"
+      @user.credit_winnings(@rate.bid)
     end
+    current_situation_user
+    current_situation_dealer
   end
 
   def dealer_move
@@ -89,4 +110,11 @@ class Interface
     current_situation_dealer
     user_move
   end
+
+  private
+
+  def cls
+  system('cls') || system('clear')
+  end
+
 end

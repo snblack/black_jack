@@ -28,5 +28,11 @@ class User
     @score
   end
 
+  def credit_winnings(rate)
+    @account += rate
+  end
 
+  def credit_draw(rate)
+    @account += rate/2
+  end
 end
