@@ -1,23 +1,35 @@
 class Interface
   def start
+    cls
     puts 'Привет. Я дилер игры Black Jack'
     puts 'Как тебя зовут?'
     name = gets.chomp
     @user = User.new(name)
     @dealer = Dealer.new
     cls
-    puts "Привет, #{@user.name}!"
-    new_game
+    puts "Привет, #{@user.name}!
+Игра начинается!\n\n"
+    puts "Ваш баланс #{@user.account}$"
+    puts "Ставка в каждой игре 10$\n\n"
+    puts "Начнем?"
+    puts "1 - Да"
+    input = gets.chomp.to_i
+    cls
+    if input == 1
+      new_game
+    else
+      abord
+    end
   end
 
   def new_game
+    cls
     @deck = Deck.new
     @deck.start(@user, @dealer)
     rate
   end
 
   def current_situation_user
-    puts "Ваш баланс #{@user.account}$"
     puts "У вас на руках #{@user.cards.count} карты:"
     @user.cards.each { |card| puts "#{card.value + card.suit}"}
     puts "У вас #{@user.current_score} очков"
@@ -25,21 +37,21 @@ class Interface
   end
 
   def current_situation_dealer
-    puts "У дилера #{@dealer.cards.count} карты\n*\n*"
-    puts "Баланс дилера #{@dealer.account}$"
+    puts "У дилера #{@dealer.cards.count} карты"
+    # puts "Баланс дилера #{@dealer.account}$"
   end
 
   def rate
     @rate = Rate.new
     @user.account -= 10
     @dealer.account -= 10
-    puts "Ставка #{@rate.bid}$"
+    puts "Ваша ставка #{@rate.bid/2}$\n\n"
     current_situation_user
     user_move
   end
 
   def user_move
-    puts "\nВаш ход #{@user.name}"
+    puts "\nКакой ваш ход, #{@user.name}?"
     puts '1 - Пропустить'
     puts '2 - Добавить карту'
     puts '3 - Открыть карты'
@@ -55,66 +67,104 @@ class Interface
   end
 
   def skip_move
+    cls
+    puts "Подождите, пока походит дилер"
+    sleep 5
     dealer_move
   end
 
   def add_card
     @user.cards << @deck.random_card_from_deck
+    cls
     current_situation_user
+    puts "Подождите, пока походит дилер"
+    sleep 7
     dealer_move
   end
 
   def open_cards
-    puts "Вкрываем карты"
-    puts "У вас #{@user.current_score} очков"
-    puts "Карты дилера: "
-    puts "У дилера на руках #{@dealer.cards.count} карты:"
-    @dealer.cards.each { |card| puts "#{card.value + card.suit}"}
-    puts "У дилера #{@dealer.current_score} очков "
+    cls
     result
   end
 
   def result
-    if @user.current_score == @dealer.current_score
-      puts 'Ничья'
-      @dealer.credit_draw
-      @user.credit_draw
-    elsif @user.current_score > 21 && @dealer.current_score > 21
-      puts 'И у дилера перебор и у вас перебор. Ничья'
-      @dealer.credit_draw(@rate.bid)
-      @user.credit_draw(@rate.bid)
-    elsif @user.current_score > 21
-      puts 'У вас перебор. Вы проиграли'
-      @dealer.credit_winnings(@rate.bid)
+    puts "\n*** Результат игры ***"
+    puts "\nВаши очки: #{@user.current_score}"
+    @user.cards.each { |card| puts "#{card.value + card.suit}"}
+
+    puts "\nОчки дилера: #{@dealer.current_score}"
+    @dealer.cards.each { |card| puts "#{card.value + card.suit}"}
+
+    puts "\n\n"
+
+    if @user.current_score > 21
+      puts 'Вы проиграли. У вас перебор.'
+      win_dealer
     elsif @dealer.current_score > 21
-      puts 'Вы выиграли у дилера перебор'
-      @user.credit_winnings(@rate.bid)
+      puts 'Ура! Вы победили! У дилера перебор.'
+      win_user
+    elsif @user.current_score == @dealer.current_score
+      puts 'Ничья'
+      draw
     elsif @dealer.current_score > @user.current_score
-      puts "Дилер победил"
-      @dealer.credit_winnings(@rate.bid)
+      puts "Дилер победил!"
+      win_dealer
     else
       puts "Ура! Вы победили!"
-      @user.credit_winnings(@rate.bid)
+      win_user
     end
-    current_situation_user
-    current_situation_dealer
+
+    puts "Ваш баланс: #{@user.account}$"
+
+    puts "\n-----------------"
+    puts "\nСыграть еще раз?"
+    puts '1 - Да'
+    puts '2 - Нет'
+
+    input = gets.chomp.to_i
+    if input == 1
+      @user.cards = []
+      @dealer.cards = []
+      if @user.account >= 10 && @dealer.account >= 10
+        new_game
+      else
+        puts 'У одного из игроков недостаточно денег для игры!'
+      end
+    else
+      abord
+    end
   end
 
   def dealer_move
-    if @dealer.current_score >= 17
-      current_situation_dealer
-      user_move
-    else
+    cls
+    if @dealer.current_score <= 17
        @dealer.cards << @deck.random_card_from_deck
+       puts "Дилер взял еще одну карту"
+       puts "У дилера #{@dealer.cards.count} карты"
+    else
+      puts "Дилер пропустил ход"
     end
-    current_situation_dealer
-    user_move
+    result
+
   end
 
   private
 
   def cls
   system('cls') || system('clear')
+  end
+
+  def win_user
+    @user.credit_winnings(@rate.bid)
+  end
+
+  def win_dealer
+    @dealer.credit_winnings(@rate.bid)
+  end
+
+  def draw
+    @dealer.credit_draw(@rate.bid)
+    @user.credit_draw(@rate.bid)
   end
 
 end
