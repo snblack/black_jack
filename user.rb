@@ -10,15 +10,15 @@ class User
 
   def current_score
     @score = 0
-    tuzes = []
+    aces = []
     @cards.each do |card|
       if card.value == 'A'
-        tuzes << card
+        aces << card
       else
         @score += card.count_score_card
       end
     end
-      tuzes.each do |tuz|
+      aces.each do |tuz|
       if @score + 11 <= 21
         @score += 11
       elsif @score + 11 > 21
