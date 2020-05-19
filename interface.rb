@@ -1,173 +1,112 @@
+# frozen_string_literal: true
+
 class Interface
+  attr_reader :player, :input
+
   def start
     cls
     puts 'Привет. Я дилер игры Black Jack'
     puts 'Как тебя зовут?'
     name = gets.chomp
-    @user = User.new(name)
-    @dealer = Dealer.new
-    cls
-    puts "Привет, #{@user.name}!
+    @player = Player.new(name)
+  end
+
+  def hello
+    puts "Привет, #{@player.name}!
 Игра начинается!\n\n"
-    puts "Ваш баланс #{@user.account}$"
+    puts "Ваш баланс #{@player.account}$"
     puts "Ставка в каждой игре 10$\n\n"
-    puts "Начнем?"
-    puts "1 - Да"
-    input = gets.chomp.to_i
-    cls
-    if input == 1
-      new_game
-    else
-      abord
-    end
+    puts 'Начнем?'
+    puts '1 - Да'
+    @input = gets.chomp.to_i
   end
 
-  def new_game
-    cls
-    @deck = Deck.new
-    @deck.shuffle
-
-    @deck.give_cards(@user, 2)
-    @deck.give_cards(@dealer, 2)
-    rate
-  end
-
-  def current_situation_user
-    puts "У вас на руках #{@user.cards.count} карты:"
-    @user.cards.each { |card| puts "#{card.value + card.suit}"}
-    puts "У вас #{@user.current_score} очков"
+  # rubocop:disable Lint/ParenthesesAsGroupedExpression, Layout/CommentIndentation
+  def current_situation_player
+    puts "У вас на руках #{@player.cards.count} карты:"
+    @player.cards.each { |card| puts (card.value + card.suit).to_s }
+    puts "У вас #{@player.current_score} очков"
     puts "\n----------"
   end
+# rubocop:enable Lint/ParenthesesAsGroupedExpression, Layout/CommentIndentation
 
   def current_situation_dealer
     puts "У дилера #{@dealer.cards.count} карты"
-    # puts "Баланс дилера #{@dealer.account}$"
   end
 
-  def rate
-    @rate = Rate.new
-    @user.account -= 10
-    @dealer.account -= 10
-    puts "Ваша ставка #{@rate.bid/2}$\n\n"
-    current_situation_user
-    user_move
+  def rate_status(rate)
+    puts "Ваша ставка #{rate.bid / 2}$\n\n"
+    current_situation_player
   end
 
-  def user_move
-    puts "\nКакой ваш ход, #{@user.name}?"
+  def player_move
+    puts "\nКакой ваш ход, #{@player.name}?"
     puts '1 - Пропустить'
     puts '2 - Добавить карту'
     puts '3 - Открыть карты'
-    input = gets.chomp.to_i
-    case input
-    when 1
-      skip_move
-    when 2
-      add_card
-    when 3
-      open_cards
-    end
+    @input = gets.chomp.to_i
   end
 
   def skip_move
-    cls
-    puts "Подождите, пока походит дилер"
+    puts 'Подождите, пока походит дилер'
     sleep 2
-    dealer_move
   end
 
   def add_card
-    @deck.give_cards(@user, 1)
-    cls
-    current_situation_user
-    puts "Подождите, пока походит дилер"
+    puts 'Подождите, пока походит дилер'
     sleep 5
-    dealer_move
   end
 
-  def open_cards
-    cls
-    result
-  end
-
-  def result
+  # rubocop:disable Metrics/AbcSize, Lint/ParenthesesAsGroupedExpression
+  def result(player, dealer)
     puts "\n*** Результат игры ***"
-    puts "\nВаши очки: #{@user.current_score}"
-    @user.cards.each { |card| puts "#{card.value + card.suit}"}
+    puts "\nВаши очки: #{@player.current_score}"
+    player.cards.each { |card| puts (card.value + card.suit).to_s }
 
-    puts "\nОчки дилера: #{@dealer.current_score}"
-    @dealer.cards.each { |card| puts "#{card.value + card.suit}"}
+    puts "\nОчки дилера: #{dealer.current_score}"
+    dealer.cards.each { |card| puts (card.value + card.suit).to_s }
 
     puts "\n\n"
+  end
+  # rubocop:enable Metrics/AbcSize, Lint/ParenthesesAsGroupedExpression
 
-    if @user.current_score > 21
-      puts 'Вы проиграли. У вас перебор.'
-      win_dealer
-    elsif @dealer.current_score > 21
-      puts 'Ура! Вы победили! У дилера перебор.'
-      win_user
-    elsif @user.current_score == @dealer.current_score
-      puts 'Ничья'
-      draw
-    elsif @dealer.current_score > @user.current_score
-      puts "Дилер победил!"
-      win_dealer
-    else
-      puts "Ура! Вы победили!"
-      win_user
-    end
-
-    puts "Ваш баланс: #{@user.account}$"
+  def balance
+    puts "Ваш баланс: #{@player.account}$"
 
     puts "\n-----------------"
     puts "\nСыграть еще раз?"
     puts '1 - Да'
     puts '2 - Нет'
 
-    input = gets.chomp.to_i
-    if input == 1
-      @user.cards = []
-      @dealer.cards = []
-      if @user.account >= 10 && @dealer.account >= 10
-        new_game
-      else
-        puts 'У одного из игроков недостаточно денег для игры!'
-      end
-    else
-      abord
-    end
+    @input = gets.chomp.to_i
   end
 
-  def dealer_move
-    cls
-    if @dealer.current_score <= 17
-       @deck.give_cards(@dealer, 1)
-       puts "Дилер взял еще одну карту"
-       puts "У дилера #{@dealer.cards.count} карты"
-    else
-      puts "Дилер пропустил ход"
-    end
-    result
-
+  def dealer_move(dealer)
+    puts 'Дилер взял еще одну карту'
+    puts "У дилера #{dealer.cards.count} карты"
   end
 
-  private
+  def dealer_skip
+    puts 'Дилер пропустил ход'
+  end
 
   def cls
-  system('cls') || system('clear')
+    system('cls') || system('clear')
   end
 
-  def win_user
-    @user.credit_winnings(@rate.bid)
+  def not_enough_money
+    puts 'У одного из игроков недостаточно денег для игры!'
+  end
+
+  def win_player
+    puts 'Ура! Вы победили!'
   end
 
   def win_dealer
-    @dealer.credit_winnings(@rate.bid)
+    puts 'Победил дилер'
   end
 
   def draw
-    @dealer.credit_draw(@rate.bid)
-    @user.credit_draw(@rate.bid)
+    pute 'Ничья'
   end
-
 end

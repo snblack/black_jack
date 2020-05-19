@@ -1,4 +1,6 @@
-class Dealer < User
+# frozen_string_literal: true
+
+class Dealer < Player
   attr_accessor :account, :cards
   attr_reader :name
 
@@ -7,5 +9,4 @@ class Dealer < User
     @name = 'Dealer'
     @cards = []
   end
-
 end
