@@ -25,7 +25,10 @@ class Interface
   def new_game
     cls
     @deck = Deck.new
-    @deck.start(@user, @dealer)
+    @deck.shuffle
+
+    @deck.give_cards(@user, 2)
+    @deck.give_cards(@dealer, 2)
     rate
   end
 
@@ -69,16 +72,16 @@ class Interface
   def skip_move
     cls
     puts "Подождите, пока походит дилер"
-    sleep 5
+    sleep 2
     dealer_move
   end
 
   def add_card
-    @user.cards << @deck.random_card_from_deck
+    @deck.give_cards(@user, 1)
     cls
     current_situation_user
     puts "Подождите, пока походит дилер"
-    sleep 7
+    sleep 5
     dealer_move
   end
 
@@ -138,7 +141,7 @@ class Interface
   def dealer_move
     cls
     if @dealer.current_score <= 17
-       @dealer.cards << @deck.random_card_from_deck
+       @deck.give_cards(@dealer, 1)
        puts "Дилер взял еще одну карту"
        puts "У дилера #{@dealer.cards.count} карты"
     else
